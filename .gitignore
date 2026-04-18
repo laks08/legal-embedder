@@ -20,12 +20,8 @@ env/
 .DS_Store
 Thumbs.db
 
-# Project artifacts (regenerate locally)
+# Project artifacts (regenerate locally; fine-tuned weights stay out of git)
 models/
-training_pairs.json
-
-# User PDF corpus — add your own under data/
-data/*.pdf
 
 # IDE
 .idea/
