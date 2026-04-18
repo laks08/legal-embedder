@@ -49,13 +49,28 @@ This model is a drop-in replacement for any sentence-transformers model and can 
 
 ## Metrics and Results
 
-| Metric | Baseline | Fine-Tuned |
-|---|---|---|
-| Silhouette Score | - | - |
-| UMAP Cluster Separation | - | - |
-| Nearest Neighbor Relevance | - | - |
+Results below come from a full notebook run on **five** US federal court opinions (Rule 10b-5 / securities-fraud–heavy domain). Silhouette uses KMeans cluster labels on the respective embedding matrices; UMAP and retrieval rows are **qualitative** summaries from Section 9.
 
-Fill in after running the notebook.
+### Silhouette score (KMeans)
+
+| Model | Score |
+| --- | ---: |
+| Baseline (all-MiniLM-L6-v2) | 0.087 |
+| Fine-tuned (legal-embedder) | 0.082 |
+
+A small drop in silhouette after fine-tuning is plausible here: contrastive training pulls related chunks together across document boundaries, which can reduce geometric “cluster compactness” in KMeans space while still improving **retrieval** precision.
+
+### UMAP cluster separation (qualitative)
+
+| | Baseline | Fine-tuned |
+| --- | --- | --- |
+| **UMAP** | Moderate — clusters overlap with diffuse boundaries in 2D. | Improved — tighter groupings and cleaner separation, especially for procedural and omission-related passages. |
+
+### Nearest-neighbor retrieval (qualitative)
+
+| | Baseline | Fine-tuned |
+| --- | --- | --- |
+| **Top-3 chunks** | Often relevant, but some drift to adjacent doctrines at lower ranks (e.g. Query 3 mixed **specialist** duties with **investment adviser** duties). | More legally precise holdings and terminology; stronger focus on Rule 10b-5 proof elements and authoritative sources, with less cross-concept drift. |
 
 ## Dependencies
 
@@ -77,4 +92,7 @@ Minimum versions are pinned in `requirements.txt`. Libraries:
 
 ## Challenges and Limitations
 
-The corpus may be small (e.g., only a handful of opinions), which limits diversity of training pairs and generalization. Legal PDFs add noise: docket strings, footnotes, and citation lines require careful preprocessing. Hosted APIs enforce rate limits, so pair generation must be paced with a limiter, checkpoints, and resume logic to avoid redundant API calls and lost progress.
+- **Corpus size** — Five opinions limit training-pair diversity; all share the same legal niche (Rule 10b-5 / securities fraud), which makes silhouette-based clustering a blunt instrument: clusters are thematically close, so scores stay modest.
+- **PDF noise** — Footnotes, docket lines, and citation strings need Docling plus the cleaning pass in the notebook.
+- **Terminology** — Dense legal language means generic encoders can conflate distinct duties or roles unless the fine-tuned space separates them (see retrieval notes above).
+- **Hosted LLM APIs** — Rate limits require pacing (`RateLimiter`), checkpoints, and resume logic for pair generation.
